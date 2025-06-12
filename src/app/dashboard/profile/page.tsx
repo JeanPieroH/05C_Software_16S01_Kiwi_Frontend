@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { fetchUserProfile } from '@/lib/api';
 import type { User } from '@/types/auth';
-import ProfileSection from '@/components/dashboard/teacher/profile-section';
+import TeacherProfileSection from '@/components/dashboard/teacher/profile-section';
+import StudentProfileSection from '@/components/dashboard/student/profile-section'; // New
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function UserProfilePage() {
@@ -17,12 +18,7 @@ export default function UserProfilePage() {
       setLoading(true);
       const currentUser = await fetchUserProfile();
       if (currentUser) {
-        if (currentUser.role === 'TEACHER') {
-            setUser(currentUser);
-        } else {
-            // Redirect non-teachers or show an access denied message
-            router.push('/dashboard'); // Or a specific page for other roles
-        }
+        setUser(currentUser);
       } else {
         router.push('/login');
       }
@@ -59,10 +55,18 @@ export default function UserProfilePage() {
   }
 
   if (!user) {
-    // User is not a teacher or not logged in, handled by redirect or layout.
-    // Or show specific message for non-teachers if they land here.
-    return <p className="text-center text-muted-foreground">Perfil no disponible para este rol o usuario no autenticado.</p>;
+    return <p className="text-center text-muted-foreground">Usuario no autenticado. Redirigiendo...</p>;
   }
 
-  return <ProfileSection user={user} />;
+  if (user.role === 'TEACHER') {
+    return <TeacherProfileSection user={user} />;
+  }
+
+  if (user.role === 'STUDENT') {
+    return <StudentProfileSection user={user} />;
+  }
+
+  // Fallback or redirect for other roles if any
+  router.push('/dashboard');
+  return <p className="text-center text-muted-foreground">Rol de usuario no reconocido para esta página.</p>;
 }

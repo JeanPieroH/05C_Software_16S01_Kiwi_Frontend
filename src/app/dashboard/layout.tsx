@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import Logo from "@/components/shared/logo";
-import { LayoutGrid, Settings, UserCircle, Users, Target as TargetIcon, Power, ChevronDown } from "lucide-react";
+import { LayoutGrid, Settings, UserCircle, Users, Target as TargetIcon, Power, ChevronDown, ShoppingCart } from "lucide-react";
 import { fetchUserProfile, logoutUser } from '@/lib/api';
 import type { User } from '@/types/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -55,6 +55,7 @@ function DashboardUI({ children }: { children: ReactNode }) {
       return "Detalle del Classroom"; 
     }
     if (pathname === '/dashboard/competencies') return "Mis Competencias";
+    if (pathname === '/dashboard/store') return "Tienda de Personajes";
     return "Dashboard";
   };
 
@@ -73,6 +74,8 @@ function DashboardUI({ children }: { children: ReactNode }) {
               <Skeleton className="h-8 w-full my-1" />
               <Skeleton className="h-8 w-full my-1" />
               <Skeleton className="h-8 w-full my-1" />
+              {/* Skeleton for potential Store link */}
+              <Skeleton className="h-8 w-full my-1" /> 
             </SidebarContent>
             <SidebarFooter className="p-2 mt-auto">
                <Skeleton className="h-8 w-full my-1" />
@@ -140,33 +143,48 @@ function DashboardUI({ children }: { children: ReactNode }) {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                asChild 
+                isActive={pathname.startsWith("/dashboard/classrooms")} 
+                tooltip="Mis Classrooms"
+                onClick={() => isMobile && setOpenMobile(false)}
+              >
+                <Link href="/dashboard/classrooms">
+                  <Users /><span>Mis Classrooms</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
             {user.role === 'TEACHER' && (
-              <>
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={pathname.startsWith("/dashboard/classrooms")} 
-                    tooltip="Mis Classrooms"
-                    onClick={() => isMobile && setOpenMobile(false)}
-                  >
-                    <Link href="/dashboard/classrooms">
-                      <Users /><span>Mis Classrooms</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={pathname === "/dashboard/competencies"} 
-                    tooltip="Mis Competencias"
-                    onClick={() => isMobile && setOpenMobile(false)}
-                  >
-                    <Link href="/dashboard/competencies">
-                      <TargetIcon /><span>Mis Competencias</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  asChild 
+                  isActive={pathname === "/dashboard/competencies"} 
+                  tooltip="Mis Competencias"
+                  onClick={() => isMobile && setOpenMobile(false)}
+                >
+                  <Link href="/dashboard/competencies">
+                    <TargetIcon /><span>Mis Competencias</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
+
+            {user.role === 'STUDENT' && (
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  asChild 
+                  isActive={pathname === "/dashboard/store"} 
+                  tooltip="Tienda"
+                  onClick={() => isMobile && setOpenMobile(false)}
+                >
+                  <Link href="/dashboard/store">
+                    <ShoppingCart /><span>Tienda</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             )}
           </SidebarMenu>
         </SidebarContent>
@@ -245,5 +263,3 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     </SidebarProvider>
   );
 }
-
-    

@@ -7,10 +7,13 @@ import { Button } from "@/components/ui/button";
 import { CalendarDays, Edit3, Eye, FileText, ListChecks, Target as TargetIcon, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import CreateQuizDialog from './create-quiz-dialog';
+import { useMemo } from 'react'; // Added useMemo
 
-interface QuizListProps {
+interface TeacherQuizListProps { // Renamed from QuizListProps
   quizzes: Quiz[];
-  classroomId: string; 
+  classroomId: string;
+  onQuizCreated: (newQuiz: Quiz) => void;
+  onViewSubmissions: (quiz: Quiz) => void;
 }
 
 const formatDate = (dateString?: string) => {
@@ -37,16 +40,19 @@ const getQuizStatus = (startTime?: string, endTime?: string): { text: string; va
 };
 
 
-export default function QuizList({ quizzes, classroomId }: QuizListProps) {
+export default function TeacherQuizList({ quizzes, classroomId, onQuizCreated, onViewSubmissions }: TeacherQuizListProps) { // Renamed component
   
-  // In a real app, this function would likely trigger a state update in the parent
-  // component (ClassroomDetailsPage) to re-fetch or update the quizzes list.
-  const handleQuizCreated = (newQuiz: Quiz) => {
-    console.log("New quiz created, needs refresh in parent component:", newQuiz);
-    // For example, if ClassroomDetailsPage passed down a function to refresh quizzes:
-    // refreshQuizzesList(); 
-    alert(`Nuevo quiz "${newQuiz.title}" creado. Refresca la página para ver los cambios (simulación).`);
-  };
+  const createQuizDialogTrigger = useMemo(() => (
+    <Button>
+      <ListChecks className="mr-2 h-5 w-5" /> Crear Nuevo Quiz
+    </Button>
+  ), []);
+  
+  const createFirstQuizDialogTrigger = useMemo(() => (
+     <Button className="mt-4">
+        <ListChecks className="mr-2 h-5 w-5" /> Crear primer Quiz
+    </Button>
+  ), []);
 
   if (quizzes.length === 0) {
     return (
@@ -57,10 +63,8 @@ export default function QuizList({ quizzes, classroomId }: QuizListProps) {
         <CardContent>
           <FileText className="mx-auto h-24 w-24 text-muted-foreground opacity-50 mb-4" />
           <p className="text-muted-foreground">Este classroom aún no tiene quizzes asignados.</p>
-          <CreateQuizDialog classroomId={classroomId} onQuizCreated={handleQuizCreated}>
-            <Button className="mt-4">
-              <ListChecks className="mr-2 h-5 w-5" /> Crear primer Quiz
-            </Button>
+          <CreateQuizDialog classroomId={classroomId} onQuizCreated={onQuizCreated}>
+            {createFirstQuizDialogTrigger}
           </CreateQuizDialog>
         </CardContent>
       </Card>
@@ -70,10 +74,8 @@ export default function QuizList({ quizzes, classroomId }: QuizListProps) {
   return (
     <div className="space-y-4">
       <div className="flex justify-end mb-4">
-        <CreateQuizDialog classroomId={classroomId} onQuizCreated={handleQuizCreated}>
-          <Button>
-              <ListChecks className="mr-2 h-5 w-5" /> Crear Nuevo Quiz
-          </Button>
+        <CreateQuizDialog classroomId={classroomId} onQuizCreated={onQuizCreated}>
+          {createQuizDialogTrigger}
         </CreateQuizDialog>
       </div>
       {quizzes.map((quiz) => {
@@ -87,7 +89,7 @@ export default function QuizList({ quizzes, classroomId }: QuizListProps) {
               </div>
               <CardDescription className="flex items-center pt-1">
                 <TargetIcon className="h-4 w-4 mr-2 text-accent" />
-                Puntos totales: {quiz.total_points}
+                Puntos totales: {quiz.total_points || 0}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
@@ -104,10 +106,10 @@ export default function QuizList({ quizzes, classroomId }: QuizListProps) {
               </div>
             </CardContent>
             <CardFooter className="flex justify-end gap-2 pt-4">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" disabled>
                 <Edit3 className="mr-1 h-4 w-4" /> Editar Quiz
               </Button>
-              <Button size="sm" variant="secondary">
+              <Button size="sm" variant="secondary" onClick={() => onViewSubmissions(quiz)}>
                 <Eye className="mr-1 h-4 w-4" /> Ver Entregas
               </Button>
             </CardFooter>
@@ -117,5 +119,3 @@ export default function QuizList({ quizzes, classroomId }: QuizListProps) {
     </div>
   );
 }
-
-    

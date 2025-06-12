@@ -8,7 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Target, Edit3, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import CreateCompetencyDialog from "./create-competency-dialog"; // Import the new dialog
+import CreateCompetencyDialog from "./create-competency-dialog";
+import EditCompetencyDialog from "./edit-competency-dialog"; // Import the new dialog
+import { useToast } from "@/hooks/use-toast";
+
 
 interface CompetenciesSectionProps {
   userId: string;
@@ -18,7 +21,12 @@ export default function CompetenciesSection({ userId }: CompetenciesSectionProps
   const [competencies, setCompetencies] = useState<Competency[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+
   const [isCreateCompetencyDialogOpen, setIsCreateCompetencyDialogOpen] = useState(false);
+  const [isEditCompetencyDialogOpen, setIsEditCompetencyDialogOpen] = useState(false);
+  const [editingCompetency, setEditingCompetency] = useState<Competency | null>(null);
+
 
   async function loadCompetencies() {
     try {
@@ -41,11 +49,18 @@ export default function CompetenciesSection({ userId }: CompetenciesSectionProps
   }, [userId]);
 
   const handleCompetencyCreated = (newCompetency: Competency) => {
-    // Option 1: Re-fetch all competencies
     loadCompetencies();
-    // Option 2: Add to existing list (if API returns the created object)
-    // setCompetencies(prev => [...prev, newCompetency]);
   };
+
+  const handleOpenEditDialog = (competency: Competency) => {
+    setEditingCompetency(competency);
+    setIsEditCompetencyDialogOpen(true);
+  };
+
+  const handleCompetencyUpdated = (updatedCompetency: Competency) => {
+     loadCompetencies(); 
+  };
+
 
   if (loading) {
     return (
@@ -107,10 +122,15 @@ export default function CompetenciesSection({ userId }: CompetenciesSectionProps
               <CardContent>
                 <p className="text-muted-foreground mb-4">{competency.description}</p>
                 <div className="flex justify-end gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => handleOpenEditDialog(competency)}>
                         <Edit3 className="mr-1 h-4 w-4" /> Editar
                     </Button>
-                    <Button variant="destructive" size="sm" className="bg-destructive/80 hover:bg-destructive">
+                    <Button 
+                        variant="destructive" 
+                        size="sm" 
+                        className="bg-destructive/80 hover:bg-destructive"
+                        onClick={() => toast({title: "Funcionalidad no implementada", description: `La eliminación de ${competency.name} aún no está disponible.`, variant: "default"})}
+                    >
                         <Trash2 className="mr-1 h-4 w-4" /> Eliminar
                     </Button>
                 </div>
@@ -125,6 +145,13 @@ export default function CompetenciesSection({ userId }: CompetenciesSectionProps
         onOpenChange={setIsCreateCompetencyDialogOpen}
         onCompetencyCreated={handleCompetencyCreated}
       />
+      <EditCompetencyDialog
+        competency={editingCompetency}
+        open={isEditCompetencyDialogOpen}
+        onOpenChange={setIsEditCompetencyDialogOpen}
+        onCompetencyUpdated={handleCompetencyUpdated}
+      />
     </div>
   );
 }
+

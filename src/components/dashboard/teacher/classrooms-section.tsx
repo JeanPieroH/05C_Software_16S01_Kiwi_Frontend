@@ -11,6 +11,9 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, School, Edit3, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import CreateClassroomDialog from "./create-classroom-dialog";
+import EditClassroomDialog from "./edit-classroom-dialog"; // Import the new dialog
+import { useToast } from "@/hooks/use-toast";
+
 
 interface ClassroomsSectionProps {
   userId: string;
@@ -21,7 +24,12 @@ export default function ClassroomsSection({ userId }: ClassroomsSectionProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { toast } = useToast();
+
   const [isCreateClassroomDialogOpen, setIsCreateClassroomDialogOpen] = useState(false);
+  const [isEditClassroomDialogOpen, setIsEditClassroomDialogOpen] = useState(false);
+  const [editingClassroom, setEditingClassroom] = useState<Omit<Classroom, 'quiz' | 'competences'> | null>(null);
+
 
   async function loadClassrooms() {
     try {
@@ -44,8 +52,18 @@ export default function ClassroomsSection({ userId }: ClassroomsSectionProps) {
   }, [userId]);
 
   const handleClassroomCreated = (newClassroom: Omit<Classroom, 'quiz' | 'competences'>) => {
-    loadClassrooms();
+    loadClassrooms(); // Re-fetch to include the new classroom
   };
+
+  const handleOpenEditDialog = (classroom: Omit<Classroom, 'quiz' | 'competences'>) => {
+    setEditingClassroom(classroom);
+    setIsEditClassroomDialogOpen(true);
+  };
+
+  const handleClassroomUpdated = (updatedClassroom: Omit<Classroom, 'quiz' | 'competences'>) => {
+     loadClassrooms(); // Re-fetch to reflect changes
+  };
+
 
   if (loading) {
     return (
@@ -97,38 +115,45 @@ export default function ClassroomsSection({ userId }: ClassroomsSectionProps) {
       ):(
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {classrooms.map((classroom) => (
-            <Link key={classroom.id} href={`/dashboard/classrooms/${classroom.id}`} passHref legacyBehavior>
-              <a className="block focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg">
-                <Card className="shadow-md hover:shadow-lg transition-shadow h-full flex flex-col cursor-pointer">
+            <Card key={classroom.id} className="shadow-md hover:shadow-lg transition-shadow h-full flex flex-col">
+                <Link
+                  href={`/dashboard/classrooms/${classroom.id}`}
+                  className="flex flex-col flex-grow focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg"
+                >
                   <CardHeader className="flex-grow">
-                    <CardTitle className="flex items-center gap-2 text-xl">
+                      <CardTitle className="flex items-center gap-2 text-xl">
                       <School className="h-6 w-6 text-accent" />
                       {classroom.name}
-                    </CardTitle>
-                    <CardDescription>{classroom.description || "Sin descripción"}</CardDescription>
+                      </CardTitle>
+                      <CardDescription>{classroom.description || "Sin descripción"}</CardDescription>
                   </CardHeader>
-                  <CardContent className="mt-auto pt-4 flex justify-end gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={(e) => { e.stopPropagation(); e.preventDefault(); alert(`Editar ${classroom.name} (Funcionalidad no implementada)`);}}
-                      aria-label={`Editar ${classroom.name}`}
-                    >
-                      <Edit3 className="mr-1 h-4 w-4" /> Editar
-                    </Button>
-                    <Button 
-                      variant="destructive" 
-                      size="sm" 
-                      className="bg-destructive/80 hover:bg-destructive" 
-                      onClick={(e) => { e.stopPropagation(); e.preventDefault(); alert(`Eliminar ${classroom.name} (Funcionalidad no implementada)`);}}
-                      aria-label={`Eliminar ${classroom.name}`}
-                    >
-                      <Trash2 className="mr-1 h-4 w-4" /> Eliminar
-                    </Button>
-                  </CardContent>
-                </Card>
-              </a>
-            </Link>
+                </Link>
+              <CardContent className="mt-auto pt-4 flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpenEditDialog(classroom);
+                  }}
+                  aria-label={`Editar ${classroom.name}`}
+                >
+                  <Edit3 className="mr-1 h-4 w-4" /> Editar
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="bg-destructive/80 hover:bg-destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toast({title: "Funcionalidad no implementada", description: `La eliminación de ${classroom.name} aún no está disponible.`, variant: "default"});
+                  }}
+                  aria-label={`Eliminar ${classroom.name}`}
+                >
+                  <Trash2 className="mr-1 h-4 w-4" /> Eliminar
+                </Button>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
@@ -137,6 +162,12 @@ export default function ClassroomsSection({ userId }: ClassroomsSectionProps) {
         open={isCreateClassroomDialogOpen}
         onOpenChange={setIsCreateClassroomDialogOpen}
         onClassroomCreated={handleClassroomCreated}
+      />
+      <EditClassroomDialog
+        classroom={editingClassroom}
+        open={isEditClassroomDialogOpen}
+        onOpenChange={setIsEditClassroomDialogOpen}
+        onClassroomUpdated={handleClassroomUpdated}
       />
     </div>
   );

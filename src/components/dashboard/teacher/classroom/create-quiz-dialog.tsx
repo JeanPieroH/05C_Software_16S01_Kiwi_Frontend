@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState, useRef, type ChangeEvent } from 'react';
-import { useForm, useFieldArray, FormProvider } from 'react-hook-form';
+import { useForm, useFieldArray, FormProvider,useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
@@ -28,6 +28,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { CardHeader } from '@/components/ui/card';
 
 interface CreateQuizDialogProps {
   classroomId: string;
@@ -241,9 +242,9 @@ export default function CreateQuizDialog({ classroomId, onQuizCreated, children 
     } else { // base_multiple_option
       const currentOptions = form.getValues(`questions.${questionIndex}.answer_base.options`);
       if (!currentOptions || currentOptions.length < 2) {
-        form.setValue(`questions.${questionIndex}.answer_base.options`, ["", ""]);
+        form.setValue(`questions.${questionIndex}.answer_base.options`, ["Opcion 1" ,"Opcion 2"]);
       }
-      form.setValue(`questions.${questionIndex}.answer_correct`, undefined as any);
+      form.setValue(`questions.${questionIndex}.answer_correct`, "Opcion 1");
     }
     form.trigger(`questions.${questionIndex}.answer_correct`);
     form.trigger(`questions.${questionIndex}.answer_base.options`);
@@ -348,8 +349,15 @@ export default function CreateQuizDialog({ classroomId, onQuizCreated, children 
       control: form.control,
       name: `questions.${questionIndex}.answer_base.options`
     });
-    const currentAnswerCorrect = form.watch(`questions.${questionIndex}.answer_correct`);
-    const currentOptions = form.watch(`questions.${questionIndex}.answer_base.options`) || [];
+    const currentAnswerCorrect = useWatch({
+      control: form.control,
+      name: `questions.${questionIndex}.answer_correct`,
+    });
+    
+    const currentOptions = useWatch({
+      control: form.control,
+      name: `questions.${questionIndex}.answer_base.options`,
+    }) || [];
 
     const handleRemoveOption = (optionIndex: number) => {
         const removedOptionValue = currentOptions[optionIndex];
@@ -377,7 +385,7 @@ export default function CreateQuizDialog({ classroomId, onQuizCreated, children 
                         placeholder={`Opción ${optionIndex + 1}`}
                         onChange={(e) => {
                             field.onChange(e);
-                            form.trigger(`questions.${questionIndex}.answer_correct`);
+                            {/*form.trigger(`questions.${questionIndex}.answer_correct`);*/}
                         }}
                     />
                   </FormControl>
@@ -392,7 +400,7 @@ export default function CreateQuizDialog({ classroomId, onQuizCreated, children 
             )}
           </div>
         ))}
-        <Button type="button" variant="outline" size="sm" onClick={() => { append(""); form.trigger(`questions.${questionIndex}.answer_correct`); }}>
+        <Button type="button" variant="outline" size="sm" onClick={() => { append(" "); form.trigger(`questions.${questionIndex}.answer_correct`); }}>
           <PlusCircle className="mr-2 h-4 w-4" /> Añadir Opción
         </Button>
          {currentOptions && currentOptions.length >= 0 && (
@@ -402,7 +410,13 @@ export default function CreateQuizDialog({ classroomId, onQuizCreated, children 
             render={({ field }) => (
               <FormItem className="mt-2">
                 <FormLabel>Respuesta Correcta (Opción Múltiple)</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value || ""}>
+                <Select
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        form.trigger(`questions.${questionIndex}.answer_correct`);
+                      }}
+                      value={field.value || ""}
+                    >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecciona la respuesta correcta" />
@@ -802,12 +816,33 @@ export default function CreateQuizDialog({ classroomId, onQuizCreated, children 
                           <Label className="text-base">Pregunta {index + 1}</Label>
                           {questionFields.length > 1 && ( <Button type="button" variant="ghost" size="icon" onClick={() => removeQuestion(index)} className="text-destructive hover:bg-destructive/10"> <Trash2 className="h-4 w-4" /> </Button> )}
                       </div>
-                      <FormField control={form.control} name={`questions.${index}.statement`} render={({ field }) => ( <FormItem> <FormLabel>Enunciado</FormLabel> <FormControl><Textarea placeholder="Escribe el enunciado de la pregunta..." {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <FormField control={form.control} name={`questions.${index}.points`} render={({ field }) => ( <FormItem> <FormLabel>Puntos</FormLabel> <FormControl><Input type="number" min="0" placeholder="0" {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
-                      </div>
-                      {form.watch(`questions.${index}.answer_base.type`) === 'base_multiple_option' ? ( <OptionsArray questionIndex={index} /> ) : ( <FormField control={form.control} name={`questions.${index}.answer_correct`} render={({ field }) => ( <FormItem> <FormLabel>Respuesta Correcta (Texto Libre)</FormLabel> <FormControl><Textarea placeholder="Escribe la respuesta correcta..." {...field} value={field.value || ""} /></FormControl> <FormMessage /> </FormItem> )}/> )}
-                      
+                      <FormField
+  control={form.control}
+  name={`questions.${index}.answer_base.type`}
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Tipo de Respuesta</FormLabel>
+      <Select
+        onValueChange={(value: "base_text" | "base_multiple_option") => {
+          field.onChange(value);
+          handleAnswerTypeChange(index, value);
+        }}
+        value={field.value} // ✅ importante: usar field.value, no form.watch(...)
+      >
+          <FormControl>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecciona el tipo de respuesta" />
+            </SelectTrigger>
+          </FormControl>
+          <SelectContent>
+            <SelectItem value="base_text">Texto Libre</SelectItem>
+            <SelectItem value="base_multiple_option">Opción Múltiple</SelectItem>
+          </SelectContent>
+      </Select>
+      <FormMessage />
+    </FormItem>
+  )}
+/>                                 
                         <FormField
                           control={form.control}
                           name={`questions.${index}.competences_id`}
@@ -895,6 +930,13 @@ export default function CreateQuizDialog({ classroomId, onQuizCreated, children 
                           );
                          }}
                         />
+                      <FormField control={form.control} name={`questions.${index}.statement`} render={({ field }) => ( <FormItem> <FormLabel>Enunciado</FormLabel> <FormControl><Textarea placeholder="Escribe el enunciado de la pregunta..." {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <FormField control={form.control} name={`questions.${index}.points`} render={({ field }) => ( <FormItem> <FormLabel>Puntos</FormLabel> <FormControl><Input type="number" min="0" placeholder="0" {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
+                      </div>
+                      {form.watch(`questions.${index}.answer_base.type`) === 'base_multiple_option' ? ( <OptionsArray questionIndex={index} /> ) : ( <FormField control={form.control} name={`questions.${index}.answer_correct`} render={({ field }) => ( <FormItem> <FormLabel>Respuesta Correcta (Texto Libre)</FormLabel> <FormControl><Textarea placeholder="Escribe la respuesta correcta..." {...field} value={field.value || ""} /></FormControl> <FormMessage /> </FormItem> )}/> )}
+                      
+                        
                     </div>
                   );
                   })}

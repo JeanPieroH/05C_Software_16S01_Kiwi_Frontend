@@ -30,3 +30,10 @@ export interface AuthResponse {
   token?: string;
   user?: User;
 }
+
+export interface AddPeopleResponse {
+  success: boolean;
+  message: string;
+  added: User[];
+  failed: Array<{ email: string; reason: string }>;
+}

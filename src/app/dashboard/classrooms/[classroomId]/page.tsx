@@ -1,24 +1,30 @@
 
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useMemo,useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { User } from '@/types/auth';
-import { fetchClassroomDetails, fetchGeneralResults, fetchCompetencyResults, fetchClassroomTeachers, fetchClassroomStudents } from '@/lib/api';
-import type { Classroom, Competency, StudentResult } from '@/types/entities';
+import { fetchClassroomDetails, fetchGeneralResults, fetchCompetencyResults, fetchClassroomTeachers, fetchClassroomStudents, fetchUserProfile } from '@/lib/api';
+import type { Classroom, Competency, StudentResult, Quiz } from '@/types/entities';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, FileText, Users, BarChart3, Info, School, ListFilter, Loader2, UserPlus } from 'lucide-react';
+import { ArrowLeft, FileText, Users, BarChart3, Info, School, ListFilter, Loader2, UserPlus, BookCopy, Edit, PlayCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import QuizList from '@/components/dashboard/teacher/classroom/quiz-list';
+import TeacherQuizList from '@/components/dashboard/teacher/classroom/quiz-list';
+import StudentQuizList from '@/components/dashboard/student/classroom/quiz-list';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ResultsPodium from '@/components/dashboard/teacher/classroom/results-podium';
 import ResultsTable from '@/components/dashboard/teacher/classroom/results-table';
 import UserDisplayCard from '@/components/dashboard/teacher/classroom/user-display-card';
 import AddPeopleDialog from '@/components/dashboard/teacher/classroom/add-people-dialog';
+import AssignCompetenciesDialog from '@/components/dashboard/teacher/classroom/assign-competencies-dialog';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import QuizSubmissionsSection from '@/components/dashboard/teacher/classroom/quiz-submissions-section';
+import StudentViewAttemptDialog from '@/components/dashboard/student/classroom/student-view-attempt-dialog';
+import StartQuizDialog from '@/components/dashboard/student/classroom/start-quiz-dialog';
+
 
 export default function ClassroomDetailsPage() {
   const router = useRouter();
@@ -26,6 +32,7 @@ export default function ClassroomDetailsPage() {
   const classroomId = params.classroomId as string;
   const { toast } = useToast();
 
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [classroomDetails, setClassroomDetails] = useState<Classroom | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,82 +49,59 @@ export default function ClassroomDetailsPage() {
   const [students, setStudents] = useState<User[]>([]);
   const [peopleLoading, setPeopleLoading] = useState<boolean>(false);
   const [peopleError, setPeopleError] = useState<string | null>(null);
+  
   const [activeTab, setActiveTab] = useState<string>("quizzes");
   const [isAddPeopleDialogOpen, setIsAddPeopleDialogOpen] = useState(false);
+  const [isAssignCompetenciesDialogOpen, setIsAssignCompetenciesDialogOpen] = useState(false);
+  
+  // For Teacher: Viewing submissions of a quiz
+  const [selectedQuizForSubmissions, setSelectedQuizForSubmissions] = useState<Quiz | null>(null);
+  
+  // For Student: Viewing their own attempt
+  const [isStudentViewAttemptDialogOpen, setIsStudentViewAttemptDialogOpen] = useState(false);
+  const [selectedQuizIdForStudentView, setSelectedQuizIdForStudentView] = useState<string | null>(null);
+  
+  // For Student: Starting a quiz
+  const [isStartQuizDialogOpen, setIsStartQuizDialogOpen] = useState(false);
+  const [selectedQuizIdForTaking, setSelectedQuizIdForTaking] = useState<string | null>(null);
+
+  const hasFetchedPeopleRef = useRef(false);
+  const hasFetchedResultsRef = useRef(false);
 
 
-  useEffect(() => {
-    if (classroomId) {
-      async function loadInitialData() {
-        try {
-          setLoading(true);
-          setError(null);
-          const data = await fetchClassroomDetails(classroomId);
-          if (data) {
-            setClassroomDetails(data);
-            setClassroomCompetenciesForFilter(data.competences || []);
-            // Fetch general results by default for the results tab
-            handleFetchResults("general", data.competences || []);
-            // Fetch people data if the people tab might be active or for pre-loading
-            if (activeTab === "people") {
-                 handleFetchPeople();
-            }
-          } else {
-            setError("No se pudieron cargar los detalles del classroom.");
-          }
-        } catch (err) {
-          setError("Error al cargar los detalles del classroom. Intente de nuevo.");
-          console.error(err);
-          toast({ title: "Error de Carga", description: "No se pudieron cargar los detalles del classroom.", variant: "destructive" });
-        } finally {
-          setLoading(false);
-        }
-      }
-      loadInitialData();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [classroomId, toast]);
-
- useEffect(() => {
-    if (classroomId && classroomDetails) {
-        handleFetchResults(selectedResultsFilter, classroomDetails.competences || []);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedResultsFilter, classroomId, classroomDetails]);
-
-  useEffect(() => {
-    if (activeTab === 'people' && classroomId && (teachers.length === 0 && students.length === 0 && !peopleLoading)) { 
-      handleFetchPeople();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, classroomId]);
-
-
-  const handleFetchResults = async (filter: string, competencies: Competency[]) => {
-    setResultsLoading(true);
-    setResultsError(null);
+  const loadInitialData = useCallback(async () => {
+    if(!classroomId) return;
+    setLoading(true);
+    setError(null);
     try {
-      let data: StudentResult[];
-      if (filter === "general") {
-        data = await fetchGeneralResults(classroomId);
-      } else {
-        const selectedCompetency = competencies.find(c => c.id === filter);
-        if (!selectedCompetency) throw new Error("Competencia seleccionada no válida");
-        data = await fetchCompetencyResults(classroomId, filter);
+      // Pass current user's ID and role to fetchClassroomDetails
+      // This allows the API mock to augment quiz data with student_attempt_summary if user is a student
+      const user = await fetchUserProfile();
+      if (!user) {
+        toast({ title: "Error de Autenticación", description: "No se pudo verificar el usuario.", variant: "destructive" });
+        router.push('/login');
+        return;
       }
-      setResultsData(data);
-    } catch (err) {
-      console.error("Error fetching results:", err);
-      const errorMessage = (err instanceof Error) ? err.message : "Ocurrió un error desconocido.";
-      setResultsError(`Error al cargar resultados: ${errorMessage}`);
-      toast({ title: "Error de Resultados", description: `No se pudieron cargar los resultados: ${errorMessage}`, variant: "destructive" });
-    } finally {
-      setResultsLoading(false);
-    }
-  };
+      setCurrentUser(user);
 
-  const handleFetchPeople = async () => {
-    if(peopleLoading) return; // Prevent multiple simultaneous fetches
+      const data = await fetchClassroomDetails(classroomId, user.id, user.role);
+      if (data) {
+        setClassroomDetails(data);
+        setClassroomCompetenciesForFilter(data.competences || []);
+      } else {
+        setError("No se pudieron cargar los detalles del classroom.");
+      }
+    } catch (err) {
+      setError("Error al cargar los detalles del classroom. Intente de nuevo.");
+      console.error(err);
+      toast({ title: "Error de Carga", description: "No se pudieron cargar los detalles del classroom.", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  }, [classroomId, toast, router]);
+
+  const handleFetchPeople = useCallback(async () => {
+    if (!classroomId) return;
     setPeopleLoading(true);
     setPeopleError(null);
     try {
@@ -128,21 +112,111 @@ export default function ClassroomDetailsPage() {
       setTeachers(fetchedTeachers);
       setStudents(fetchedStudents);
     } catch (err) {
-      console.error("Error fetching people:", err);
-      const errorMessage = (err instanceof Error) ? err.message : "Ocurrió un error desconocido.";
-      setPeopleError(`Error al cargar personas: ${errorMessage}`);
-      toast({ title: "Error al Cargar Personas", description: `No se pudieron cargar los docentes y estudiantes: ${errorMessage}`, variant: "destructive" });
+      setPeopleError("No se pudieron cargar las personas del classroom.");
+      console.error('Error fetching people:', err);
     } finally {
       setPeopleLoading(false);
     }
-  };
+  }, [classroomId]);
 
-  const handlePeopleAdded = () => {
+  const handleFetchResults = useCallback(
+    async (filter: string) => {
+      if (!classroomId) return;
+      setResultsLoading(true);
+      setResultsError(null);
+      try {
+        let data: StudentResult[] = [];
+        if (filter === 'general') {
+          data = await fetchGeneralResults(classroomId);
+        } else {
+          data = await fetchCompetencyResults(classroomId, filter);
+        }
+        setResultsData(data);
+      } catch (err) {
+        setResultsError("No se pudieron cargar los resultados.");
+        console.error('Error fetching results:', err);
+      } finally {
+        setResultsLoading(false);
+      }
+    },
+    [classroomId]
+  );
+
+
+  useEffect(() => {
+    // Reset fetch flags if tab changes to ensure fresh data load for that tab
+    if (activeTab === 'people') hasFetchedPeopleRef.current = false;
+    if (activeTab === 'results') hasFetchedResultsRef.current = false;
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'people' && classroomId && !hasFetchedPeopleRef.current && !peopleLoading) {
+      hasFetchedPeopleRef.current = true;
+      handleFetchPeople();
+    }
+  }, [activeTab, classroomId, peopleLoading, handleFetchPeople]);
+
+  useEffect(() => {
+    if (
+      classroomId &&
+      classroomDetails && 
+      activeTab === 'results' &&
+      !hasFetchedResultsRef.current && !resultsLoading
+    ) {
+      hasFetchedResultsRef.current = true;
+      handleFetchResults(selectedResultsFilter);
+    }
+  }, [selectedResultsFilter, classroomId, classroomDetails, activeTab, resultsLoading, handleFetchResults]);
+
+
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]); 
+
+
+  const handlePeopleAdded = useCallback(() => {
     toast({ title: "Lista Actualizada", description: "Refrescando lista de personas..."});
-    handleFetchPeople(); // Re-fetch people to update the lists
-  };
+    handleFetchPeople(); 
+  }, [handleFetchPeople, toast]);
+  
+  const handleAssignmentsSaved = useCallback((updatedClassroom: Classroom) => {
+    setClassroomDetails(updatedClassroom); 
+    setClassroomCompetenciesForFilter(updatedClassroom.competences || []);
+    toast({ title: "Competencias Guardadas", description: "Las competencias del classroom han sido actualizadas." });
+  }, [toast]);
 
-  if (loading && !classroomDetails) { 
+  const handleQuizCreated = useCallback(() => {
+    toast({ title: "Quiz Creado", description: `El quiz ha sido creado. Refrescando datos...` });
+    loadInitialData(); 
+  }, [loadInitialData, toast]);
+
+  const handleViewSubmissions = useCallback((quizToView: Quiz) => {
+    setSelectedQuizForSubmissions(quizToView);
+  }, []);
+
+  const handleCloseSubmissions = useCallback(() => {
+    setSelectedQuizForSubmissions(null);
+  }, []);
+
+  const handleStartQuiz = useCallback((quizId: string) => {
+    setSelectedQuizIdForTaking(quizId);
+    setIsStartQuizDialogOpen(true);
+  }, []);
+
+  const handleViewStudentAttempt = useCallback((quizId: string) => {
+    if (currentUser && currentUser.role === 'STUDENT') {
+      setSelectedQuizIdForStudentView(quizId);
+      setIsStudentViewAttemptDialogOpen(true);
+    }
+  }, [currentUser]);
+
+  const handleQuizAttemptSubmitted = useCallback(() => {
+    toast({ title: "Entrega Registrada", description: "Tu quiz ha sido enviado. Refrescando datos..." });
+    loadInitialData(); // Re-fetch classroom details to update quiz list with attempt summary
+  }, [loadInitialData, toast]);
+
+
+  if (loading && !classroomDetails && !currentUser) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-10 w-1/4" />
@@ -150,7 +224,18 @@ export default function ClassroomDetailsPage() {
             <Skeleton className="h-8 w-3/4" />
             <Skeleton className="h-6 w-1/2" />
         </div>
-        <Skeleton className="h-10 w-full mb-4" />
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+            <div>
+                <Skeleton className="h-6 w-1/3 mb-2" />
+                <Skeleton className="h-16 w-full" />
+            </div>
+            <div>
+                <Skeleton className="h-6 w-1/2 mb-2" />
+                <Skeleton className="h-10 w-full mb-2" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+        </div>
+        <Skeleton className="h-10 w-full mb-4 mt-6" />
         <Card>
           <CardHeader> <Skeleton className="h-6 w-1/3" /> </CardHeader>
           <CardContent className="space-y-4"> {[...Array(3)].map((_, i) => ( <Skeleton key={i} className="h-20 w-full" /> ))} </CardContent>
@@ -169,32 +254,17 @@ export default function ClassroomDetailsPage() {
     );
   }
 
-  if (!classroomDetails) {
+  if (!currentUser || !classroomDetails) {
     return (
       <div className="text-center py-10">
         <School className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-        <p className="text-muted-foreground text-lg mb-4">Classroom no encontrado.</p>
+        <p className="text-muted-foreground text-lg mb-4">Classroom no encontrado o usuario no autenticado.</p>
          <Button onClick={() => router.push('/dashboard/classrooms')}> <ArrowLeft className="mr-2 h-4 w-4" /> Volver a Mis Classrooms </Button>
       </div>
     );
   }
-
-  const handleQuizCreated = (newQuiz: any) => {
-    toast({ title: "Quiz Creado", description: `El quiz "${newQuiz.title}" ha sido creado. Refrescando datos...` });
-    async function reloadClassroomData() {
-        try {
-            const data = await fetchClassroomDetails(classroomId); 
-            if (data) {
-                setClassroomDetails(data);
-                setClassroomCompetenciesForFilter(data.competences || []);
-            }
-        } catch (err) {
-            toast({ title: "Error", description: "No se pudieron recargar los datos del classroom.", variant: "destructive" });
-        }
-    }
-    reloadClassroomData();
-  };
-
+  
+  const isTeacher = currentUser.role === 'TEACHER';
 
   return (
     <div className="space-y-6">
@@ -202,20 +272,95 @@ export default function ClassroomDetailsPage() {
         <ArrowLeft className="mr-2 h-4 w-4" /> Volver a Mis Classrooms
       </Button>
 
-      <div className="mb-6">
-        <h2 className="text-3xl font-headline text-primary">{classroomDetails.name}</h2>
-        <p className="text-lg text-muted-foreground mt-1">{classroomDetails.description}</p>
+      <div >
+        <h2 className="text-3xl font-headline text-primary mb-3">{classroomDetails.name}</h2>
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 items-start">
+          <div>
+            <h3 className="text-xl font-semibold text-foreground mb-2 flex items-center">
+                <Info className="h-5 w-5 mr-2 text-accent"/>
+                Descripción del Classroom
+            </h3>
+            <p className="text-base text-muted-foreground leading-relaxed">{classroomDetails.description}</p>
+          </div>
+          {isTeacher && (
+            <div className="mb-8 p-6 bg-card rounded-lg shadow-lg border">
+                <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-xl font-semibold text-foreground flex items-center">
+                        <BookCopy className="h-5 w-5 mr-2 text-accent"/>
+                        Competencias Asignadas
+                    </h3>
+                    <Button size="sm" variant="outline" onClick={() => setIsAssignCompetenciesDialogOpen(true)}>
+                        <Edit className="mr-2 h-4 w-4" /> Asignar Competencias
+                    </Button>
+                </div>
+                {classroomDetails.competences && classroomDetails.competences.length > 0 ? (
+                <div className="space-y-3 max-h-60 overflow-y-auto pr-2 rounded-md">
+                    {classroomDetails.competences.map(comp => (
+                    <div key={comp.id} className="p-3 border rounded-lg bg-background shadow-sm hover:shadow-md transition-shadow">
+                        <p className="font-semibold text-foreground">{comp.name}</p>
+                        <p className="text-sm text-muted-foreground mt-0.5 leading-snug">{comp.description}</p>
+                    </div>
+                    ))}
+                </div>
+                ) : (
+                <p className="text-sm text-muted-foreground italic p-3 border border-dashed rounded-lg bg-muted/50 text-center">
+                    No hay competencias asignadas a este classroom.
+                </p>
+                )}
+            </div>
+          )}
+          {!isTeacher && classroomDetails.competences && classroomDetails.competences.length > 0 && (
+             <div className="mb-8 p-6 bg-card rounded-lg shadow-md border">
+                <h3 className="text-xl font-semibold text-foreground mb-2 flex items-center">
+                    <BookCopy className="h-5 w-5 mr-2 text-accent"/>
+                    Competencias del Classroom
+                </h3>
+                <div className="space-y-3 max-h-60 overflow-y-auto pr-2 rounded-md">
+                    {classroomDetails.competences.map(comp => (
+                    <div key={comp.id} className="p-3 border rounded-lg bg-background shadow-sm">
+                        <p className="font-semibold text-foreground">{comp.name}</p>
+                        <p className="text-sm text-muted-foreground mt-0.5 leading-snug">{comp.description}</p>
+                    </div>
+                    ))}
+                </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      <Tabs defaultValue="quizzes" onValueChange={setActiveTab} className="w-full">
+
+      <Tabs defaultValue="quizzes" value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 mb-4">
           <TabsTrigger value="quizzes"><FileText className="mr-2 h-4 w-4"/>Quizzes</TabsTrigger>
           <TabsTrigger value="results"><BarChart3 className="mr-2 h-4 w-4"/>Resultados</TabsTrigger>
           <TabsTrigger value="people"><Users className="mr-2 h-4 w-4"/>Personas</TabsTrigger>
         </TabsList>
+        
         <TabsContent value="quizzes">
-          <QuizList quizzes={classroomDetails.quiz || []} classroomId={classroomId} onQuizCreated={handleQuizCreated}/>
+          {isTeacher ? (
+            selectedQuizForSubmissions ? (
+              <QuizSubmissionsSection
+                  quiz={selectedQuizForSubmissions}
+                  onClose={handleCloseSubmissions}
+              />
+            ) : (
+              <TeacherQuizList
+                quizzes={classroomDetails.quiz || []}
+                classroomId={classroomId}
+                onQuizCreated={handleQuizCreated}
+                onViewSubmissions={handleViewSubmissions}
+              />
+            )
+          ) : ( 
+            <StudentQuizList
+              quizzes={classroomDetails.quiz || []}
+              onStartQuiz={handleStartQuiz}
+              onViewAttempt={handleViewStudentAttempt}
+              currentUserId={currentUser.id}
+            />
+          )}
         </TabsContent>
+
         <TabsContent value="results">
           <Card>
             <CardHeader>
@@ -225,7 +370,7 @@ export default function ClassroomDetailsPage() {
                     <CardDescription>Filtra para ver el ranking general o por competencia.</CardDescription>
                 </div>
                 <div className="w-full sm:w-auto min-w-[200px] sm:min-w-[250px]">
-                    <Select value={selectedResultsFilter} onValueChange={setSelectedResultsFilter}>
+                    <Select value={selectedResultsFilter} onValueChange={setSelectedResultsFilter} disabled={resultsLoading}>
                         <SelectTrigger className="w-full">
                             <div className="flex items-center"> <ListFilter className="h-4 w-4 mr-2 opacity-70" /> <SelectValue placeholder="Filtrar resultados..." /> </div>
                         </SelectTrigger>
@@ -258,18 +403,20 @@ export default function ClassroomDetailsPage() {
                   <CardTitle>Personas en el Classroom</CardTitle>
                   <CardDescription>Docentes y estudiantes inscritos en este classroom.</CardDescription>
                 </div>
-                <Button variant="outline" onClick={() => setIsAddPeopleDialogOpen(true)}> 
-                    <UserPlus className="mr-2 h-4 w-4" /> Añadir Personas 
-                </Button>
+                {isTeacher && (
+                    <Button variant="outline" onClick={() => setIsAddPeopleDialogOpen(true)}>
+                        <UserPlus className="mr-2 h-4 w-4" /> Añadir Personas
+                    </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
               {peopleLoading && (
                 <div className="space-y-4">
-                    <Skeleton className="h-8 w-1/4 mb-2" /> 
+                    <Skeleton className="h-8 w-1/4 mb-2" />
                     {[...Array(1)].map((_, i) => <Skeleton key={`teacher-skel-${i}`} className="h-20 w-full" />)}
-                    <Skeleton className="h-px w-full my-4" /> 
-                    <Skeleton className="h-8 w-1/4 mb-2" /> 
+                    <Skeleton className="h-px w-full my-4" />
+                    <Skeleton className="h-8 w-1/4 mb-2" />
                     {[...Array(2)].map((_, i) => <Skeleton key={`student-skel-${i}`} className="h-20 w-full" />)}
                 </div>
               )}
@@ -301,12 +448,47 @@ export default function ClassroomDetailsPage() {
           </Card>
         </TabsContent>
       </Tabs>
-      <AddPeopleDialog
-        classroomId={classroomId}
-        open={isAddPeopleDialogOpen}
-        onOpenChange={setIsAddPeopleDialogOpen}
-        onPeopleAdded={handlePeopleAdded}
-      />
+
+      {isTeacher && (
+        <>
+            <AddPeopleDialog
+                classroomId={classroomId}
+                open={isAddPeopleDialogOpen}
+                onOpenChange={setIsAddPeopleDialogOpen}
+                onPeopleAdded={handlePeopleAdded}
+            />
+            {classroomDetails && (
+                <AssignCompetenciesDialog
+                    classroomId={classroomId}
+                    teacherId={currentUser.id} 
+                    initiallyAssignedCompetencies={classroomDetails.competences || []}
+                    open={isAssignCompetenciesDialogOpen}
+                    onOpenChange={setIsAssignCompetenciesDialogOpen}
+                    onAssignmentsSaved={handleAssignmentsSaved}
+                />
+            )}
+        </>
+      )}
+      {!isTeacher && selectedQuizIdForStudentView && currentUser && (
+        <StudentViewAttemptDialog
+          open={isStudentViewAttemptDialogOpen}
+          onOpenChange={setIsStudentViewAttemptDialogOpen}
+          quizId={selectedQuizIdForStudentView}
+          studentId={currentUser.id}
+          studentName={`${currentUser.name} ${currentUser.lastName}`}
+          quizTotalPoints={classroomDetails.quiz?.find(q => q.id === selectedQuizIdForStudentView)?.total_points || 0}
+        />
+      )}
+      {!isTeacher && selectedQuizIdForTaking && currentUser && (
+        <StartQuizDialog
+          open={isStartQuizDialogOpen}
+          onOpenChange={setIsStartQuizDialogOpen}
+          quizId={selectedQuizIdForTaking}
+          studentId={currentUser.id}
+          onQuizAttemptSubmitted={handleQuizAttemptSubmitted}
+        />
+      )}
     </div>
   );
 }
+
