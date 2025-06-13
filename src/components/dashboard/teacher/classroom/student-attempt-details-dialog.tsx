@@ -336,6 +336,4 @@ export default function StudentAttemptDetailsDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-  
-    
+  );}
