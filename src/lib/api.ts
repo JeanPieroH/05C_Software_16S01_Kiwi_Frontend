@@ -191,20 +191,19 @@ const mockTeacherGeneralCompetencies: Record<string, Competency[]> = {
   ]
 };
 
-
 const mockStudentCurrentCharacter: Record<string, Character> = {
   'student1': {
     id: "35a36131-5548-4378-96ca-c5cb909c7450",
     name: "Donkey",
-    modelUrl: "https://models.readyplayer.me/664b6c735a83699a96e14614.glb?morphTargets=ARKit,Oculus%20Visemes,mouthOpen,mouthSmile,eyesClosed,eyesLookUp,eyesLookDown&textureAtlas=1024&lod=0",
-    price: 11.51,
+    modelUrl: "https://mscharacters.s3.us-east-1.amazonaws.com/Donkey.glb",
+    price: 0, // Assuming current character is already owned
     type: "ANIMAL",
   },
-   '2': { // Alex Student
+   '2': { // Alex Student - Default character
     id: "c2aebc34-d5b8-4411-908a-293e644c3c79",
     name: "Fox",
-    modelUrl: "https://models.readyplayer.me/6580480d07effc09bc1922a0.glb?morphTargets=ARKit,Oculus%20Visemes,mouthOpen,mouthSmile,eyesClosed,eyesLookUp,eyesLookDown&textureAtlas=1024&lod=0",
-    price: 11.82,
+    modelUrl: "https://mscharacters.s3.us-east-1.amazonaws.com/Fox.glb",
+    price: 0,
     type: "ANIMAL",
   },
 };
@@ -214,22 +213,15 @@ const mockStoreCharacters: StoreCharacterData = {
     {
       id: "35a36131-5548-4378-96ca-c5cb909c7450",
       name: "Donkey",
-      modelUrl: "https://models.readyplayer.me/664b6c735a83699a96e14614.glb?morphTargets=ARKit,Oculus%20Visemes,mouthOpen,mouthSmile,eyesClosed,eyesLookUp,eyesLookDown&textureAtlas=1024&lod=0",
-      price: 11.51,
+      modelUrl: "https://mscharacters.s3.us-east-1.amazonaws.com/Donkey.glb",
+      price: 10,
       type: "ANIMAL",
     },
     {
       id: "c2aebc34-d5b8-4411-908a-293e644c3c79",
       name: "Fox",
-      modelUrl: "https://models.readyplayer.me/6580480d07effc09bc1922a0.glb?morphTargets=ARKit,Oculus%20Visemes,mouthOpen,mouthSmile,eyesClosed,eyesLookUp,eyesLookDown&textureAtlas=1024&lod=0",
-      price: 11.82,
-      type: "ANIMAL",
-    },
-    {
-      id: "d3aebc34-d5b8-4411-908a-293e644c3c80",
-      name: "Stag",
-      modelUrl: "https://models.readyplayer.me/6597dd76f5394a27bb015910.glb?morphTargets=ARKit,Oculus%20Visemes,mouthOpen,mouthSmile,eyesClosed,eyesLookUp,eyesLookDown&textureAtlas=1024&lod=0",
-      price: 15.00,
+      modelUrl: "https://mscharacters.s3.us-east-1.amazonaws.com/Fox.glb",
+      price: 12,
       type: "ANIMAL",
     }
   ],
@@ -237,26 +229,20 @@ const mockStoreCharacters: StoreCharacterData = {
     {
       id: "58a998f1-a706-4870-b288-fe34b007846a",
       name: "Business Man",
-      modelUrl: "https://models.readyplayer.me/658048c707effc09bc19240d.glb?morphTargets=ARKit,Oculus%20Visemes,mouthOpen,mouthSmile,eyesClosed,eyesLookUp,eyesLookDown&textureAtlas=1024&lod=0",
-      price: 5.82,
+      modelUrl: "https://mscharacters.s3.us-east-1.amazonaws.com/Business%20Man.glb",
+      price: 20,
       type: "HUMAN",
     },
     {
       id: "829f34b4-a538-40d3-82bf-1f571d73bcdd",
-      name: "Sci-Fi Female",
-      modelUrl: "https://models.readyplayer.me/6597df98e534914107588a99.glb?morphTargets=ARKit,Oculus%20Visemes,mouthOpen,mouthSmile,eyesClosed,eyesLookUp,eyesLookDown&textureAtlas=1024&lod=0",
-      price: 14.23,
-      type: "HUMAN",
-    },
-    {
-      id: "939f34b4-a538-40d3-82bf-1f571d73bcdf",
-      name: "Casual Male",
-      modelUrl: "https://models.readyplayer.me/6597e075f5394a27bb0164ae.glb?morphTargets=ARKit,Oculus%20Visemes,mouthOpen,mouthSmile,eyesClosed,eyesLookUp,eyesLookDown&textureAtlas=1024&lod=0",
-      price: 10.00,
+      name: "Mech-Zorro",
+      modelUrl: "https://mscharacters.s3.us-east-1.amazonaws.com/Mech-Zorro.glb",
+      price: 25,
       type: "HUMAN",
     }
   ],
 };
+
 
 const mockQuizSubmissionsList: Record<string, QuizSubmissionSummary[]> = {
   'q1': [ // Submissions for "Quiz de Bienvenida"
@@ -266,22 +252,20 @@ const mockQuizSubmissionsList: Record<string, QuizSubmissionSummary[]> = {
   ],
   'q2': [ // Submissions for "Quiz Intermedio: Unidad 1"
     { student_id: 'student1', student_name: 'Ana', student_last_name: 'García', points_obtained: 22, submission_date: '2025-06-20T12:00:00Z' },
-    // No submission for Alex Student for q2 yet
   ],
-   'q3': [ // Submissions for "Prueba de Álgebra Básica" in classroom c2
+   'q3': [ 
     { student_id: 'student4', student_name: 'Carlos', student_last_name: 'Hernandez', points_obtained: 25, submission_date: '2025-07-01T10:00:00Z' },
-    // student5 has not submitted q3 yet
   ],
 };
 
 const mockStudentQuizAttemptsData: Record<string, StudentQuizAttempt> = {
-  'q1_student1': { // Attempt of Ana García for Quiz de Bienvenida
+  'q1_student1': { 
     id: 'attempt-q1-s1',
     title: "Quiz de Bienvenida",
     instruction: "Completa este quiz para empezar y familiarizarte con la plataforma...",
     start_time: "2025-06-15T09:00:00Z",
     end_time: "2025-06-16T23:59:00Z",
-    created_at: "2025-06-15T10:00:00Z", // Submission time
+    created_at: "2025-06-15T10:00:00Z", 
     updated_at: "2025-06-15T10:00:00Z",
     feedback_automated: "Buen trabajo completando el quiz de bienvenida.",
     feedback_teacher: null,
@@ -290,7 +274,7 @@ const mockStudentQuizAttemptsData: Record<string, StudentQuizAttempt> = {
     student_id: 'student1',
     questions: [
       {
-        ...(mockClassroomDetailsData['c1'].quiz![0].questions![0] as QuestionAttempt), // Pregunta 1
+        ...(mockClassroomDetailsData['c1'].quiz![0].questions![0] as QuestionAttempt), 
         id: 'q1-ques1',
         feedback_automated: "Respuesta parcialmente correcta.",
         feedback_teacher: null,
@@ -298,7 +282,7 @@ const mockStudentQuizAttemptsData: Record<string, StudentQuizAttempt> = {
         answer_submitted: { type: "submitted_text", answer_written: "Respuesta de Ana" },
       },
       {
-        ...(mockClassroomDetailsData['c1'].quiz![0].questions![1] as QuestionAttempt), // Pregunta 2
+        ...(mockClassroomDetailsData['c1'].quiz![0].questions![1] as QuestionAttempt), 
         id: 'q1-ques2',
         feedback_automated: "¡Correcto!",
         feedback_teacher: "Bien hecho en esta.",
@@ -307,13 +291,13 @@ const mockStudentQuizAttemptsData: Record<string, StudentQuizAttempt> = {
       }
     ]
   },
-  'q1_2': { // Attempt of Alex Student for Quiz de Bienvenida
-    id: 'attempt-q1-s2', // s2 refers to Alex Student (user id '2')
+  'q1_2': { 
+    id: 'attempt-q1-s2', 
     title: "Quiz de Bienvenida",
     instruction: "Completa este quiz para empezar y familiarizarte con la plataforma...",
     start_time: "2025-06-15T09:00:00Z",
     end_time: "2025-06-16T23:59:00Z",
-    created_at: "2025-06-15T09:30:00Z", // Submission time
+    created_at: "2025-06-15T09:30:00Z", 
     updated_at: "2025-06-15T09:30:00Z",
     feedback_automated: "¡Excelente! Puntuación perfecta.",
     feedback_teacher: "Muy buen inicio, Alex.",
@@ -446,9 +430,9 @@ export const updateUserProfile = async (userId: string, data: Partial<Pick<User,
 };
 
 export const fetchTeacherClassrooms = async (userId: string): Promise<Omit<Classroom, 'quiz' | 'competences'>[]> => {
-  await new Promise(resolve => setTimeout(resolve, 300)); // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 300)); 
   const classrooms = mockTeacherClassrooms[userId] || [];
-  return classrooms.map(c => ({...c})); // Return copies
+  return classrooms.map(c => ({...c})); 
 };
 
 export const createTeacherClassroom = async (userId: string, classroomData: { name: string; description: string }): Promise<Omit<Classroom, 'quiz' | 'competences'>> => {
@@ -570,7 +554,7 @@ export const fetchClassroomDetails = async (classroomId: string, studentId?: str
   await new Promise(resolve => setTimeout(resolve, 500));
   const classroom = mockClassroomDetailsData[classroomId];
   if (classroom) {
-    const classroomCopy = JSON.parse(JSON.stringify(classroom)); // Deep copy
+    const classroomCopy = JSON.parse(JSON.stringify(classroom)); 
 
     if (studentRole === 'STUDENT' && studentId && classroomCopy.quiz) {
       classroomCopy.quiz.forEach((q: Quiz) => {
@@ -871,7 +855,7 @@ export const addPeopleToClassroom = async (classroomId: string, emails: string[]
 
 export const fetchStudentCurrentCharacter = async (studentId: string): Promise<Character | null> => {
   await new Promise(resolve => setTimeout(resolve, 300));
-  return mockStudentCurrentCharacter[studentId] ? { ...mockStudentCurrentCharacter[studentId] } : null;
+  return mockStudentCurrentCharacter[studentId] ? { ...mockStudentCurrentCharacter[studentId] } : (mockStudentCurrentCharacter['2'] ? {...mockStudentCurrentCharacter['2']} : null); // Default to Alex Student if specific not found
 };
 
 export const fetchStoreCharacters = async (): Promise<StoreCharacterData> => {
@@ -908,8 +892,8 @@ export const purchaseCharacter = async (studentId: string, characterId: string, 
   }
 
   student.coin_available = (student.coin_available || 0) - price;
-  mockStudentCurrentCharacter[studentId] = { ...characterToPurchase };
-  mockUsers[studentId] = { ...student };
+  mockStudentCurrentCharacter[studentId] = { ...characterToPurchase }; // Update student's current character
+  mockUsers[studentId] = { ...student }; // Save updated student info (coins)
 
 
   return { success: true, message: `¡Has comprado ${characterToPurchase.name}!`, updatedUser: { ...student } };
@@ -994,7 +978,6 @@ export const fetchQuizForTaking = async (quizId: string): Promise<QuizForTaking 
   console.log(`API: Fetching quiz for taking: ${quizId}`);
   await new Promise(resolve => setTimeout(resolve, 400));
 
-  // Find the full quiz details from any classroom (simplification for mock)
   let fullQuiz: Quiz | undefined;
   for (const classroomId in mockClassroomDetailsData) {
     fullQuiz = mockClassroomDetailsData[classroomId].quiz?.find(q => q.id === quizId);
@@ -1006,7 +989,6 @@ export const fetchQuizForTaking = async (quizId: string): Promise<QuizForTaking 
     return null;
   }
 
-  // Transform to QuizForTaking: remove correct answers
   const quizForTaking: QuizForTaking = {
     id: fullQuiz.id,
     title: fullQuiz.title,
@@ -1019,19 +1001,17 @@ export const fetchQuizForTaking = async (quizId: string): Promise<QuizForTaking 
       id: q.id,
       statement: q.statement,
       points: q.points,
-      answer_base: q.answer_base, // Keep options for multiple choice
+      answer_base: q.answer_base, 
       competences_id: q.competences_id,
-      // Omit answer_correct
     })),
   };
-  return JSON.parse(JSON.stringify(quizForTaking)); // Return a deep copy
+  return JSON.parse(JSON.stringify(quizForTaking)); 
 };
 
 export const submitStudentQuizAttempt = async (payload: StudentQuizSubmissionPayload): Promise<{ success: boolean; message: string; points_obtained?: number }> => {
   console.log("API: Submitting student quiz attempt:", JSON.stringify(payload, null, 2));
   await new Promise(resolve => setTimeout(resolve, 800));
 
-  // Find the original quiz to get correct answers for grading
   let originalQuiz: Quiz | undefined;
   let originalClassroomId: string | undefined;
 
@@ -1090,10 +1070,10 @@ export const submitStudentQuizAttempt = async (payload: StudentQuizSubmissionPay
     totalPointsObtained += questionPoints;
 
     gradedQuestionAttempts.push({
-      ...originalQuestion, // Spread original question data
+      ...originalQuestion, 
       id: originalQuestion.id,
       feedback_automated: autoFeedback,
-      feedback_teacher: null, // Teacher feedback to be added later
+      feedback_teacher: null, 
       points_obtained: questionPoints,
       answer_submitted: submittedQ.answer_submitted,
     });
@@ -1116,7 +1096,6 @@ export const submitStudentQuizAttempt = async (payload: StudentQuizSubmissionPay
     student_id: payload.student_id,
   };
 
-  // Update student_attempt_summary in the main classroom quiz list
   const classroomForUpdate = mockClassroomDetailsData[originalClassroomId];
   const quizIndexInClassroom = classroomForUpdate.quiz?.findIndex(q => q.id === payload.quiz_id);
   if (quizIndexInClassroom !== undefined && quizIndexInClassroom !== -1 && classroomForUpdate.quiz) {
@@ -1126,12 +1105,10 @@ export const submitStudentQuizAttempt = async (payload: StudentQuizSubmissionPay
     };
   }
 
-  // Update student's overall coins (example: earn 1 coin per point)
   const studentUser = mockUsers[payload.student_id];
   if (studentUser && studentUser.role === 'STUDENT') {
     studentUser.coin_earned = (studentUser.coin_earned || 0) + totalPointsObtained;
-    studentUser.coin_available = (studentUser.coin_available || 0) + totalPointsObtained; // For simplicity, earned = available increase
-    // Potentially update emotion based on score - simple example
+    studentUser.coin_available = (studentUser.coin_available || 0) + totalPointsObtained; 
     if (totalPointsObtained > (originalQuiz.total_points || 0) * 0.8) {
       studentUser.emotion = "¡Genial!";
     } else if (totalPointsObtained < (originalQuiz.total_points || 0) * 0.4) {

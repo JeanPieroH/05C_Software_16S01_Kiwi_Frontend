@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge';
 // Dynamically import ModelViewer to avoid SSR issues with three.js
 const ModelViewer = dynamic(() => import('@/components/store/ModelViewer'), {
   ssr: false,
-  loading: () => <Skeleton className="w-full h-[350px] md:h-[350px] rounded-lg" />,
+  loading: () => <Skeleton className="w-full h-[200px] md:h-[300px] rounded-lg" />,
 });
 
 
@@ -152,7 +152,7 @@ export default function StorePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col items-center gap-4">
-                <div className="w-full h-[300px] md:h-[350px] rounded-lg overflow-hidden bg-muted flex items-center justify-center shadow-inner">
+                 <div className="w-full h-[300px] md:h-[350px] rounded-lg overflow-hidden bg-muted flex items-center justify-center shadow-inner">
                     {currentCharacter && currentCharacter.modelUrl ? (
                          <ModelViewer url={currentCharacter.modelUrl} height={350} />
                     ) : (
@@ -184,7 +184,7 @@ export default function StorePage() {
                         <Card key={char.id} className="flex flex-col overflow-hidden shadow-md hover:shadow-xl transition-shadow">
                         <CardHeader className="p-0">
                             <div className="aspect-square w-full bg-muted flex items-center justify-center overflow-hidden relative">
-                                <ModelViewer url={char.modelUrl} height={350} />
+                                <ModelViewer url={char.modelUrl} height={200} />
                                 {currentCharacter?.id === char.id && (
                                     <Badge className="absolute top-2 right-2 bg-green-500 text-white">
                                         <CheckCircle className="mr-1 h-4 w-4"/> Equipado
