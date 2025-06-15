@@ -20,7 +20,7 @@ import { User as UserIcon, Mail, Lock, Briefcase, Eye, EyeOff } from 'lucide-rea
 
 const registerSchema = z.object({
   name: z.string().min(1, { message: "First name is required." }),
-  lastName: z.string().min(1, { message: "Last name is required." }),
+  last_name: z.string().min(1, { message: "Last name is required." }),
   email: z.string().email({ message: "Invalid email address." }),
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
   role: z.enum(['TEACHER', 'STUDENT'], { message: "Role is required." }),
@@ -38,7 +38,7 @@ export default function RegisterForm() {
     resolver: zodResolver(registerSchema),
     defaultValues: {
       name: "",
-      lastName: "",
+      last_name: "",
       email: "",
       password: "",
       role: undefined, // Or a default role if desired e.g. 'STUDENT'
@@ -76,7 +76,7 @@ export default function RegisterForm() {
   return (
     <Card className="w-full shadow-2xl">
       <CardHeader>
-        <CardTitle className="text-2xl font-headline text-center">Create an Account</CardTitle>
+        <CardTitle className="text-2xl font-headline text-center">Crea una cuenta</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -87,11 +87,11 @@ export default function RegisterForm() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-foreground/80">First Name</FormLabel>
+                    <FormLabel className="text-foreground/80">Nombre</FormLabel>
                     <div className="relative">
                       <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <FormControl>
-                        <Input placeholder="John" {...field} className="pl-10" />
+                        <Input placeholder="Luis" {...field} className="pl-10" />
                       </FormControl>
                     </div>
                     <FormMessage />
@@ -100,14 +100,14 @@ export default function RegisterForm() {
               />
               <FormField
                 control={form.control}
-                name="lastName"
+                name="last_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-foreground/80">Last Name</FormLabel>
+                    <FormLabel className="text-foreground/80">Apellido</FormLabel>
                      <div className="relative">
                       <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <FormControl>
-                        <Input placeholder="Doe" {...field} className="pl-10" />
+                        <Input placeholder="Pérez" {...field} className="pl-10" />
                       </FormControl>
                     </div>
                     <FormMessage />
@@ -124,7 +124,7 @@ export default function RegisterForm() {
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <FormControl>
-                      <Input type="email" placeholder="you@example.com" {...field} className="pl-10" />
+                      <Input type="email" placeholder="correo@kiwi.com" {...field} className="pl-10" />
                     </FormControl>
                   </div>
                   <FormMessage />
@@ -162,18 +162,18 @@ export default function RegisterForm() {
               name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-foreground/80">Role</FormLabel>
+                  <FormLabel className="text-foreground/80">Rol</FormLabel>
                   <div className="relative">
                     <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground z-10" />
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger className="pl-10">
-                          <SelectValue placeholder="Select your role" />
+                          <SelectValue placeholder="Selecciona tu Rol" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="STUDENT">Student</SelectItem>
-                        <SelectItem value="TEACHER">Teacher</SelectItem>
+                        <SelectItem value="STUDENT">Estudiante</SelectItem>
+                        <SelectItem value="TEACHER">Docente</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -182,16 +182,16 @@ export default function RegisterForm() {
               )}
             />
             <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isLoading}>
-              {isLoading ? "Creating Account..." : "Create Account"}
+              {isLoading ? "Creando Cuenta..." : "Crear Cuenta"}
             </Button>
           </form>
         </Form>
       </CardContent>
       <CardFooter className="flex flex-col items-center space-y-2">
         <p className="text-sm text-muted-foreground">
-          Already have an account?{" "}
+          ¿Ya tienes una cuenta?{" "}
           <Link href="/login" className="font-medium text-primary hover:underline">
-            Sign in
+            Iniciar Sesión
           </Link>
         </p>
       </CardFooter>

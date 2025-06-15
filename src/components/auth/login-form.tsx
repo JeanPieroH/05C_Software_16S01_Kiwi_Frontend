@@ -69,7 +69,7 @@ export default function LoginForm() {
   return (
     <Card className="w-full shadow-2xl">
       <CardHeader>
-        <CardTitle className="text-2xl font-headline text-center">Welcome Back!</CardTitle>
+        <CardTitle className="text-2xl font-headline text-center">¡Bienvenido de nuevo!</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -83,7 +83,7 @@ export default function LoginForm() {
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <FormControl>
-                      <Input type="email" placeholder="you@example.com" {...field} className="pl-10" />
+                      <Input type="email" placeholder="correo@kiwi.com" {...field} className="pl-10" />
                     </FormControl>
                   </div>
                   <FormMessage />
@@ -117,14 +117,14 @@ export default function LoginForm() {
               )}
             />
             <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isLoading}>
-              {isLoading ? "Signing In..." : "Sign In"}
+              {isLoading ? "iniciando Sesión..." : "Iniciar Sesión"}
             </Button>
           </form>
         </Form>
       </CardContent>
       <CardFooter className="flex flex-col items-center space-y-2">
         <p className="text-sm text-muted-foreground">
-          Don&apos;t have an account?{" "}
+          ¿No tienes una cuenta?{" "}
           <Link href="/register" className="font-medium text-primary hover:underline">
             Sign up
           </Link>

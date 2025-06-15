@@ -34,7 +34,7 @@ export default function HomePage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background">
         <Logo size="large" className="mb-4 animate-pulse" />
-        <p className="text-lg text-muted-foreground">Loading KIWI Classroom...</p>
+        <p className="text-lg text-muted-foreground">Cargando KIWI Classroom...</p>
       </div>
     );
   }
@@ -44,9 +44,9 @@ export default function HomePage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-8 text-center">
       <Logo size="large" className="mb-8" />
-      <h1 className="text-4xl font-bold font-headline text-primary mb-4">Welcome to KIWI Classroom</h1>
+      <h1 className="text-4xl font-bold font-headline text-primary mb-4">Bienvenido a KIWI Classroom</h1>
       <p className="text-xl text-foreground/80 mb-8 max-w-2xl">
-        Your space to learn, create, and grow. Get started by logging in or creating an account.
+        Tu espacio para aprender, crear, y crecer. Da tu primer paso ingresando o registrando una cuenta.
       </p>
       <div className="space-x-4">
         <Button onClick={() => router.push('/login')} size="lg">Login</Button>

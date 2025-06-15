@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function RegisterPage() {
   return (
-    <AuthLayout title="Join KIWI Classroom" description="Sign up to start your learning journey.">
+    <AuthLayout title="Únete a KIWI Classroom" description="Registrese para iniciar su viaje de aprendizaje.">
       <RegisterForm />
     </AuthLayout>
   );

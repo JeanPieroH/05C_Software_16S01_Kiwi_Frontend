@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <AuthLayout title="Sign In to KIWI" description="Enter your credentials to access your account.">
+    <AuthLayout title="Incia sesión en KIWI" description="Ingrese sus credenciales para acceder a su cuenta.">
       <LoginForm />
     </AuthLayout>
   );

@@ -23,10 +23,10 @@ const AuthLayout: FC<AuthLayoutProps> = ({ children, title, description }) => {
         <div className="relative z-10 text-center">
           <Logo size="large" className="text-primary mb-6" />
           <p className="text-2xl text-foreground/80 font-headline mt-4">
-            Welcome to KIWI Classroom
+            Bienvenido a KIWI Classroom
           </p>
           <p className="text-lg text-foreground/70 mt-2">
-            Unlock your learning potential.
+            Libera tu potencial de aprendizaje.
           </p>
         </div>
       </div>
